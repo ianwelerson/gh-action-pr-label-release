@@ -6,6 +6,9 @@
   "scripts": {
     "build": "npx tsc",
     "dist": "npx ncc build ./src/main.ts",
+    "dist:watch": "npm run dist -- -w",
+    "act": "npm run dist && act pull_request -e act/pr_close_payload.json",
+    "act:watch": "npm run dist -- -w & act pull_request -e act/pr_close_payload.json -w",
     "lint:check": "eslint \"**/*.ts\" --ignore-pattern node_modules/",
     "lint:fix": "npm run lint:check -- --fix",
     "prepare": "husky install"

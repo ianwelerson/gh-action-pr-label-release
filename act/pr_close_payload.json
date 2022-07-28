@@ -175,7 +175,7 @@
            "url":"https://api.github.com/users/ianwelerson"
         }
      },
-     "body":null,
+     "body":"My release body",
      "changed_files":10,
      "closed_at":"2022-07-21T23:34:19Z",
      "comments":0,
@@ -329,7 +329,15 @@
      "id":1004803690,
      "issue_url":"https://api.github.com/repos/ianwelerson/gh-action-pr-label-release/issues/1",
      "labels":[
-        
+         {
+            "id": 208045946,
+            "node_id": "MDU6TGFiZWwyMDgwNDU5NDY=",
+            "url": "https://api.github.com/repos/ianwelerson/gh-action-pr-label-release/labels/major",
+            "name": "major",
+            "description": "Major release",
+            "color": "f29513",
+            "default": true
+         }
      ],
      "locked":false,
      "maintainer_can_modify":false,

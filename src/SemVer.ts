@@ -3,7 +3,7 @@ import { GetSemVerResult } from './types/SemVer'
 import { ApiTag } from './types/Api'
 
 // Receive the next version type and a list of tags
-function GetSemVer (releaseType: ReleaseType, tagList: ApiTag[]): GetSemVerResult {
+function GetSemVer (releaseType: ReleaseType, tagList: ApiTag[], vPrefix: boolean): GetSemVerResult {
   // Get current version from tag list
   const repositoryCurrentTag = tagList.sort((a, b) => rcompare(a.name, b.name))[0]?.name ?? '0.0.0' // Sort the list in descending order and get the first item, if it's null we set to the version 0
 
@@ -25,8 +25,8 @@ function GetSemVer (releaseType: ReleaseType, tagList: ApiTag[]): GetSemVerResul
 
   // Return the current version and the next
   return {
-    currentTag,
-    nextTag
+    currentTag: repositoryCurrentTag,
+    nextTag: `${vPrefix ? 'v' : ''}${nextTag}`
   }
 }
 

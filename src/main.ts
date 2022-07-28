@@ -4,16 +4,19 @@ import GetSemVer from './SemVer'
 
 (async function () {
   try {
+    // Get the context payload
+    const payload = github.context.payload
+
+    // Check if it's a PR event
+    if (!payload.pull_request) {
+      throw new Error('This action only can be used by Pull Request events.')
+    }
+
     /**
      * Getting all the Action Inputs
      */
     const githubToken = core.getInput('github-token')
-
-    /**
-     * Create variables
-     */
-    const payload = github.context.payload
-    const { owner, repo } = github.context.repo
+    const vPrefix = core.getInput('v-prefix') === 'true'
 
     /**
      * Create an octokit client
@@ -21,24 +24,84 @@ import GetSemVer from './SemVer'
     const octokitClient = github.getOctokit(githubToken)
 
     /**
-     * Deal with tags
+     * Create variables
      */
+    const { owner, repo } = github.context.repo
+    const contextSha = github.context.sha
+    // const { owner, repo } = {
+    //   owner: 'ianwelerson',
+    //   repo: 'gh-action-test-repo'
+    // }
+    // const contextSha = 'c0cc5b55ec4085c3de52c0743eb60e7784c4d2b3'
+    const releaseTitle = payload.pull_request.title
+    const releaseBody = payload.pull_request.body
+    const allowedTags = ['major', 'premajor', 'minor', 'preminor', 'patch', 'prepatch', 'prerelease']
+    const releaseType = payload.pull_request.labels.find((label: { name: string }) => allowedTags.includes(label.name))?.name
+    const userData = (await octokitClient.rest.users.getAuthenticated()).data
+
+    /**
+     * Validations
+     */
+    if (!userData || !userData.name || !userData.email) {
+      throw new Error('We can\'t find the token info')
+    }
+
+    if (!releaseType) {
+      throw new Error(`The PR hasn't any valid release type. The values can be one of this: ${allowedTags.join(', ')}.`)
+    }
+
+    /**
+     * Action steps
+     */
+    // Get repository tag list
     const tagList = await octokitClient.rest.repos.listTags({
       owner,
       repo
     })
-    const { currentTag, nextTag } = GetSemVer('minor', tagList.data)
-    core.info(`Current version: ${currentTag}`)
-    core.info(`Next version: ${nextTag}`)
+    // Defining the current tag and the next
+    const { currentTag, nextTag } = GetSemVer(releaseType, tagList.data, vPrefix)
+    core.info(`Current tag: ${currentTag}`)
+    core.info(`Next tag: ${nextTag}`)
 
-    /**
-     * Logs
-     */
-    core.info(`The event payload: ${JSON.stringify(payload)}`)
+    // Create tag
+    const tagData = await octokitClient.rest.git.createTag({
+      owner,
+      repo,
+      tag: nextTag,
+      message: releaseTitle,
+      object: contextSha,
+      type: 'commit',
+      tagger: {
+        name: userData.name,
+        email: userData.email
+      }
+    })
+    core.info(`Tag ${nextTag} criada com sucesso!`)
+
+    // Create the tag reference
+    await octokitClient.rest.git.createRef({
+      owner,
+      repo,
+      ref: `refs/tags/${nextTag}`,
+      sha: tagData.data.sha
+    })
+    core.info(`Referência da tag ${nextTag} criada com sucesso!`)
+
+    // Create release
+    const releaseData = await octokitClient.rest.repos.createRelease({
+      owner,
+      repo,
+      tag_name: nextTag,
+      name: releaseTitle,
+      body: releaseBody
+    })
+    core.info(`Release ${nextTag} criado com sucesso!`)
 
     /**
      * Outputs
      */
+    core.setOutput('tag', nextTag)
+    core.setOutput('release_url', releaseData.data.html_url)
   } catch (error) {
     core.setFailed((error as any).message)
   }

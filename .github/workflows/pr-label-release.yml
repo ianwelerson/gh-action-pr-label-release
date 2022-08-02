@@ -16,3 +16,4 @@ jobs:
         uses: ./
         with:
           v-prefix: true
+          github-token: ${{ secrets.GHTOKEN }}

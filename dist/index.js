@@ -12023,8 +12023,8 @@ const SemVer_1 = __importDefault(__nccwpck_require__(8379));
             // Get the context payload
             const payload = github.context.payload;
             // Check if it's a PR event
-            if (!payload.pull_request) {
-                throw new Error('This action only can be used by Pull Request events.');
+            if (!payload.pull_request || !payload.pull_request.merged) {
+                throw new Error('This action can only be used by a Pull Request merge event.');
             }
             /**
              * Getting all the Action Inputs
@@ -12036,22 +12036,17 @@ const SemVer_1 = __importDefault(__nccwpck_require__(8379));
              */
             const octokitClient = github.getOctokit(githubToken);
             /**
-             * Create variables
+             * Create all variables
              */
             const { owner, repo } = github.context.repo;
             const contextSha = github.context.sha;
-            // const { owner, repo } = {
-            //   owner: 'ianwelerson',
-            //   repo: 'gh-action-test-repo'
-            // }
-            // const contextSha = 'c0cc5b55ec4085c3de52c0743eb60e7784c4d2b3'
             const releaseTitle = payload.pull_request.title;
             const releaseBody = payload.pull_request.body;
             const allowedTags = ['major', 'premajor', 'minor', 'preminor', 'patch', 'prepatch', 'prerelease'];
             const releaseType = (_a = payload.pull_request.labels.find((label) => allowedTags.includes(label.name))) === null || _a === void 0 ? void 0 : _a.name;
             const userData = (yield octokitClient.rest.users.getAuthenticated()).data;
             /**
-             * Validations
+             * Variables validations
              */
             if (!userData || !userData.name || !userData.email) {
                 throw new Error('We can\'t find the token info');
@@ -12062,7 +12057,7 @@ const SemVer_1 = __importDefault(__nccwpck_require__(8379));
             /**
              * Action steps
              */
-            // Get repository tag list
+            // -- Get repository tag list
             const tagList = yield octokitClient.rest.repos.listTags({
                 owner,
                 repo
@@ -12071,7 +12066,7 @@ const SemVer_1 = __importDefault(__nccwpck_require__(8379));
             const { currentTag, nextTag } = (0, SemVer_1.default)(releaseType, tagList.data, vPrefix);
             core.info(`Current tag: ${currentTag}`);
             core.info(`Next tag: ${nextTag}`);
-            // Create tag
+            // -- Create tag
             const tagData = yield octokitClient.rest.git.createTag({
                 owner,
                 repo,
@@ -12085,7 +12080,7 @@ const SemVer_1 = __importDefault(__nccwpck_require__(8379));
                 }
             });
             core.info(`Tag ${nextTag} criada com sucesso!`);
-            // Create the tag reference
+            // -- Create the tag reference
             yield octokitClient.rest.git.createRef({
                 owner,
                 repo,
@@ -12093,7 +12088,7 @@ const SemVer_1 = __importDefault(__nccwpck_require__(8379));
                 sha: tagData.data.sha
             });
             core.info(`Referência da tag ${nextTag} criada com sucesso!`);
-            // Create release
+            // -- Create release
             const releaseData = yield octokitClient.rest.repos.createRelease({
                 owner,
                 repo,

@@ -8,8 +8,8 @@ import GetSemVer from './SemVer'
     const payload = github.context.payload
 
     // Check if it's a PR event
-    if (!payload.pull_request) {
-      throw new Error('This action only can be used by Pull Request events.')
+    if (!payload.pull_request || !payload.pull_request.merged) {
+      throw new Error('This action can only be used by a Pull Request merge event.')
     }
 
     /**
@@ -24,15 +24,10 @@ import GetSemVer from './SemVer'
     const octokitClient = github.getOctokit(githubToken)
 
     /**
-     * Create variables
+     * Create all variables
      */
     const { owner, repo } = github.context.repo
     const contextSha = github.context.sha
-    // const { owner, repo } = {
-    //   owner: 'ianwelerson',
-    //   repo: 'gh-action-test-repo'
-    // }
-    // const contextSha = 'c0cc5b55ec4085c3de52c0743eb60e7784c4d2b3'
     const releaseTitle = payload.pull_request.title
     const releaseBody = payload.pull_request.body
     const allowedTags = ['major', 'premajor', 'minor', 'preminor', 'patch', 'prepatch', 'prerelease']
@@ -40,7 +35,7 @@ import GetSemVer from './SemVer'
     const userData = (await octokitClient.rest.users.getAuthenticated()).data
 
     /**
-     * Validations
+     * Variables validations
      */
     if (!userData || !userData.name || !userData.email) {
       throw new Error('We can\'t find the token info')
@@ -53,7 +48,7 @@ import GetSemVer from './SemVer'
     /**
      * Action steps
      */
-    // Get repository tag list
+    // -- Get repository tag list
     const tagList = await octokitClient.rest.repos.listTags({
       owner,
       repo
@@ -63,7 +58,7 @@ import GetSemVer from './SemVer'
     core.info(`Current tag: ${currentTag}`)
     core.info(`Next tag: ${nextTag}`)
 
-    // Create tag
+    // -- Create tag
     const tagData = await octokitClient.rest.git.createTag({
       owner,
       repo,
@@ -78,7 +73,7 @@ import GetSemVer from './SemVer'
     })
     core.info(`Tag ${nextTag} criada com sucesso!`)
 
-    // Create the tag reference
+    // -- Create the tag reference
     await octokitClient.rest.git.createRef({
       owner,
       repo,
@@ -87,7 +82,7 @@ import GetSemVer from './SemVer'
     })
     core.info(`Referência da tag ${nextTag} criada com sucesso!`)
 
-    // Create release
+    // -- Create release
     const releaseData = await octokitClient.rest.repos.createRelease({
       owner,
       repo,

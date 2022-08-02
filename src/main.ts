@@ -63,7 +63,7 @@ import GetSemVer from './SemVer'
       owner,
       repo,
       tag: nextTag,
-      message: releaseTitle,
+      message: releaseTitle ?? currentTag,
       object: contextSha,
       type: 'commit',
       tagger: {
@@ -87,8 +87,8 @@ import GetSemVer from './SemVer'
       owner,
       repo,
       tag_name: nextTag,
-      name: releaseTitle,
-      body: releaseBody
+      name: releaseTitle ?? currentTag,
+      body: releaseBody ?? ''
     })
     core.info(`Release ${nextTag} criado com sucesso!`)
 

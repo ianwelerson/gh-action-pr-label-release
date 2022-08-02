@@ -12071,7 +12071,7 @@ const SemVer_1 = __importDefault(__nccwpck_require__(8379));
                 owner,
                 repo,
                 tag: nextTag,
-                message: releaseTitle,
+                message: releaseTitle !== null && releaseTitle !== void 0 ? releaseTitle : currentTag,
                 object: contextSha,
                 type: 'commit',
                 tagger: {
@@ -12093,8 +12093,8 @@ const SemVer_1 = __importDefault(__nccwpck_require__(8379));
                 owner,
                 repo,
                 tag_name: nextTag,
-                name: releaseTitle,
-                body: releaseBody
+                name: releaseTitle !== null && releaseTitle !== void 0 ? releaseTitle : currentTag,
+                body: releaseBody !== null && releaseBody !== void 0 ? releaseBody : ''
             });
             core.info(`Release ${nextTag} criado com sucesso!`);
             /**

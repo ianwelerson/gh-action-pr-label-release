@@ -9,6 +9,10 @@ inputs:
     description: github token
     required: false
     default: ${{ github.token }}
+  v-prefix:
+    description: prefix the version with v (Eg v1.2.3)
+    required: false
+    default: 'false'
 runs:
   using: 'node16'
   main: 'dist/index.js'
